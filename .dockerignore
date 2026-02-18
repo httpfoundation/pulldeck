@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build output (will be built in container)
+dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.docker-manager.env
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+specs/
+.cursor/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test files
+test-*.ps1
+tests/
+
+# Temporary files
+*.tmp
+*.swp

@@ -1,0 +1,36 @@
+name: Build and publish Docker image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /var/lib/docker
+          key: ${{ runner.os }}-docker-${{ github.event.repository.name }}
+
+      - name: Build Docker image
+        run: |
+          TAG=${{ github.sha }}
+          docker build -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$TAG -t ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest .
+
+      - name: Push Docker image
+        run: |
+          TAG=${{ github.sha }}
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$TAG
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+

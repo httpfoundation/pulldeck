@@ -1,0 +1,26 @@
+services:
+  docker-manager:
+    image: ghcr.io/httpfoundation/docker-manager:latest
+    container_name: docker-manager-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount Docker socket to allow container to manage host Docker
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount host directories containing docker-compose files (see note below)
+      - /home/user/apps:/home/user/apps:ro
+    env_file:
+      - .docker-manager.env
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})",
+        ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
