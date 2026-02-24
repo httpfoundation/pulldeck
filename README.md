@@ -160,7 +160,7 @@ Alternatively, add them as repository-level secrets (Repository Settings → Sec
 
 ## API Reference
 
-All endpoints under `/api` require a `Authorization: Bearer <AUTH_TOKEN>` header.
+All endpoints under `/api` require an `Authorization: Bearer <AUTH_TOKEN>` header.
 
 ### Health Check
 
@@ -284,7 +284,7 @@ Finds **all** containers (running and stopped) that use a specific image and reb
 }
 ```
 
-**Note**: Containers are processed sequentially (one at a time) to avoid resource contention. The operation continues even if some containers fail - check the `results` array for detailed status of each container. Only containers started via docker-compose are rebuilt; others are marked as "skipped" in the response.
+**Note**: Containers are processed sequentially (one at a time) to avoid resource contention. The operation continues even if some containers fail - check the `results` array for detailed status of each container. Only containers started via `docker compose` are rebuilt; others are marked as "skipped" in the response.
 
 ---
 
