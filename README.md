@@ -1,10 +1,10 @@
-# Docker Manager
+# Pulldeck
 
-A lightweight REST API that runs on your server and manages Docker containers remotely. It is designed to slot into CI/CD pipelines — push a new image, then tell Docker Manager to pull it and rebuild the affected containers, all over HTTP.
+A lightweight REST API that runs on your server and manages Docker containers remotely. It is designed to slot into CI/CD pipelines — push a new image, then tell Pulldeck to pull it and rebuild the affected containers, all over HTTP.
 
 ## How It Works
 
-Docker Manager runs as a Docker container on your server with access to the host's Docker socket. When it receives an API request it can:
+Pulldeck runs as a Docker container on your server with access to the host's Docker socket. When it receives an API request it can:
 
 1. **Pull** the latest version of a container image from a registry (Docker Hub, GHCR, or any OCI-compatible registry).
 2. **Find** every container on the host that uses a given image.
@@ -16,7 +16,7 @@ Authentication is handled via a Bearer token that you define at startup. All `/a
 
 ### 1. Create an environment file
 
-Create a `.docker-manager.env` file on your server:
+Create a `.pulldeck.env` file on your server:
 
 ```env
 # REQUIRED: Static token for API authentication
@@ -43,9 +43,9 @@ Create a `docker-compose.yml` (or add the service to an existing one):
 
 ```yaml
 services:
-  docker-manager:
-    image: ghcr.io/httpfoundation/docker-manager:latest
-    container_name: docker-manager-api
+  pulldeck:
+    image: ghcr.io/httpfoundation/pulldeck:latest
+    container_name: pulldeck
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -55,12 +55,12 @@ services:
       # Mount host directories containing docker-compose files (see note below)
       - /home/user/apps:/home/user/apps:ro
     env_file:
-      - .docker-manager.env
+      - .pulldeck.env
 ```
 
 #### Mounting host paths
 
-Docker Manager rebuilds containers by reading their `docker compose` labels to find the original compose file and project directory on the host. Because Docker Manager itself runs inside a container, it can only access host paths that are bind-mounted into it.
+Pulldeck rebuilds containers by reading their `docker compose` labels to find the original compose file and project directory on the host. Because Pulldeck itself runs inside a container, it can only access host paths that are bind-mounted into it.
 
 You must mount every host directory that contains a `docker-compose.yml` for a service you want to manage. Critically, the **container path must be identical to the host path** so that the compose-file references stored in container labels resolve correctly.
 
@@ -81,7 +81,7 @@ volumes:
   - /home/deploy:/home/deploy:ro
 ```
 
-> The `:ro` (read-only) flag is recommended — Docker Manager only needs to _read_ compose files. The actual `docker compose up` commands are executed via the Docker socket, not the filesystem.
+> The `:ro` (read-only) flag is recommended — Pulldeck only needs to _read_ compose files. The actual `docker compose up` commands are executed via the Docker socket, not the filesystem.
 
 ### 3. Verify
 
@@ -102,7 +102,7 @@ curl http://localhost:3000/health
 
 ## Usage with GitHub Actions
 
-The [`httpfoundation/docker-manager-deploy-action`](https://github.com/httpfoundation/docker-manager-deploy-action) GitHub Action wraps the API calls into a single step. It pulls the latest image and rebuilds every container that uses it.
+The [`httpfoundation/pulldeck-deploy-action`](https://github.com/httpfoundation/pulldeck-deploy-action) GitHub Action wraps the API calls into a single step. It pulls the latest image and rebuilds every container that uses it.
 
 ### Minimal Example
 
@@ -123,19 +123,19 @@ jobs:
 
       # ... your build & push steps ...
 
-      - uses: httpfoundation/docker-manager-deploy-action@v1
+      - uses: httpfoundation/pulldeck-deploy-action@v1
         with:
-          base-url: ${{ secrets.DOCKER_MANAGER_BASE_URL }}
-          token: ${{ secrets.DOCKER_MANAGER_TOKEN }}
+          base-url: ${{ secrets.PULLDECK_BASE_URL }}
+          token: ${{ secrets.PULLDECK_TOKEN }}
 ```
 
 ### With an Explicit Image
 
 ```yaml
-- uses: httpfoundation/docker-manager-deploy-action@v1
+- uses: httpfoundation/pulldeck-deploy-action@v1
   with:
-    base-url: ${{ secrets.DOCKER_MANAGER_BASE_URL }}
-    token: ${{ secrets.DOCKER_MANAGER_TOKEN }}
+    base-url: ${{ secrets.PULLDECK_BASE_URL }}
+    token: ${{ secrets.PULLDECK_TOKEN }}
     image: ghcr.io/my-org/my-app:latest
 ```
 
@@ -143,20 +143,20 @@ jobs:
 
 | Input      | Required | Description                                                                                                |
 | ---------- | -------- | ---------------------------------------------------------------------------------------------------------- |
-| `base-url` | Yes      | The URL where Docker Manager is running (e.g. `https://deploy.example.com`)                                |
+| `base-url` | Yes      | The URL where Pulldeck is running (e.g. `https://deploy.example.com`)                                      |
 | `token`    | Yes      | The `AUTH_TOKEN` you configured on the server                                                              |
 | `image`    | No       | Image to rebuild. Defaults to `ghcr.io/<owner>/<repo>:latest` based on the repository running the workflow |
 
 ### Secrets Setup
 
-The action requires two secrets: `DOCKER_MANAGER_BASE_URL` and `DOCKER_MANAGER_TOKEN`.
+The action requires two secrets: `PULLDECK_BASE_URL` and `PULLDECK_TOKEN`.
 
 Because these values are typically the same across every repository that deploys to the same server, consider setting them as **organization-level secrets** (Organization Settings → Secrets and variables → Actions) instead of per-repository secrets. Organization secrets can be scoped to all repositories or a subset, and only need to be updated in one place if the server URL or token changes.
 
 Alternatively, add them as repository-level secrets (Repository Settings → Secrets and variables → Actions):
 
-- **`DOCKER_MANAGER_BASE_URL`** — the public URL of your Docker Manager instance (e.g. `https://deploy.example.com`).
-- **`DOCKER_MANAGER_TOKEN`** — the value of `AUTH_TOKEN` from your `.docker-manager.env` file.
+- **`PULLDECK_BASE_URL`** — the public URL of your Pulldeck instance (e.g. `https://deploy.example.com`).
+- **`PULLDECK_TOKEN`** — the value of `AUTH_TOKEN` from your `.pulldeck.env` file.
 
 ## API Reference
 
@@ -232,7 +232,7 @@ Lists all running containers on the host that use a given image.
 POST /api/containers/rebuild
 ```
 
-Rebuilds a single container by name. The container must have been started via `docker compose` so that Docker Manager can locate the compose file and service name from container labels.
+Rebuilds a single container by name. The container must have been started via `docker compose` so that Pulldeck can locate the compose file and service name from container labels.
 
 **Request body:**
 
