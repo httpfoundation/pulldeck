@@ -1,6 +1,6 @@
 # Pulldeck
 
-A lightweight REST API that runs on your server and manages Docker containers remotely. It is designed to slot into CI/CD pipelines — push a new image, then tell Pulldeck to pull it and rebuild the affected containers, all over HTTP.
+A lightweight deployment agent that exposes an HTTP API on your server. Your CI/CD pipeline pushes a new container image to a registry, then calls Pulldeck to pull it and rebuild every affected container in-place via `docker compose`.
 
 ## How It Works
 
